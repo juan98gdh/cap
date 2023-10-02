@@ -81,41 +81,30 @@ int main(int nargs, char **argv)
             
             __m128i* data_ptr_one = (__m128i*)(rgb_image + i);
             __m128i* data_ptr_two = (__m128i*)(rgb_image + i + 8);
+            __m128i filas = _mm_loadl_epi64(data_ptr_one); 
+            __m128i columnas = _mm_loadl_epi64(data_ptr_two);
 
-            // Storing 2 pixels in each vector
-            __m128i datal = _mm_loadl_epi64(data_ptr_one); // 2 pixeles
-            __m128i datah = _mm_loadl_epi64(data_ptr_two);
+            // Extendemos los vectores y los convertimos a floats
+            __m256i extendedFilasInt = _mm256_cvtepu8_epi32(filas);
+            __m256 extendedFilasFloat = _mm256_cvtepi32_ps(extendedFilasInt);
+            __m256i extendedColumnasInt = _mm256_cvtepu8_epi32(columnas);
+            __m256 extendedColumnasFloat = _mm256_cvtepi32_ps(extendedColumnasInt);
 
-            // Extending each vector and converting to float
-            __m256i extendedlInt = _mm256_cvtepu8_epi32(datal);
-            __m256 extendedlFloat = _mm256_cvtepi32_ps(extendedlInt);
+            // generamos el vector de coeficientes y lo usamos para multiplicar los vectores por pares de pixeles.
+            __m256 coeficientes = _mm256_set_ps(0.0, 0.1140, 0.5870, 0.2989, 0.0, 0.1140, 0.5870, 0.2989);
+            __m256 par1 = _mm256_mul_ps(extendedFilasFloat, coeficientes);
+            __m256 par2 = _mm256_mul_ps(extendedColumnasFloat, coeficientes); 
 
-            __m256i extendedhInt = _mm256_cvtepu8_epi32(datah);
-            __m256 extendedhFloat = _mm256_cvtepi32_ps(extendedhInt);
+            // hacemos un horizontal add, dos  veces porque no se completa en una sola.
+            __m256 h_add = _mm256_hadd_ps(par1, par2);
+            __m256 h_add = _mm256_hadd_ps(h_add, h_add);
 
-            // Generating the coefficients vector
-            __m256 coefficients = _mm256_set_ps(0.0, 0.1140, 0.5870, 0.2989, 0.0, 0.1140, 0.5870, 0.2989);
+            // permutamos el vector final y lo extraemos para el outcome.
+            __m256 permutado = _mm256_permutevar8x32_ps(h_add, _mm256_set_epi32(0, 0, 0, 0, 5, 1, 4, 0)); // After permutations
+            __m128 outcome = _mm256_extractf128_ps(permutado, 0);
 
-            // Multiplicating each vector with the coefficients
-            __m256 mull = _mm256_mul_ps(extendedlFloat, coefficients); // Pixel 1 and Pixel 2
-            __m256 mulh = _mm256_mul_ps(extendedhFloat, coefficients); // Pixel 3 and Pixel 4
-
-            // Now we can add horizontal add each vector
-            __m256 hadded = _mm256_hadd_ps(mull, mulh);
-
-            // The adding is not complete so we add a second time
-            __m256 secondHadded = _mm256_hadd_ps(hadded, hadded);
-
-            // The final vector has duplicates and a strange order so we permutate it
-            __m256 reorder = _mm256_permutevar8x32_ps(secondHadded, _mm256_set_epi32(0, 0, 0, 0, 5, 1, 4, 0)); // After permutations
-
-            // Extract the 128bit vector
-            __m128 extracted = _mm256_extractf128_ps(reorder, 0);
-
-
-            // Store the 4 pixels
             for (int k = 0; k < 4; k++) {
-                grey_image[j + k] = (int) extracted[k];
+                grey_image[j + k] = (int) outcome[k];
             }
         }
 
