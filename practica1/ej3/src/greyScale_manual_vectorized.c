@@ -97,7 +97,7 @@ int main(int nargs, char **argv)
 
             // hacemos un horizontal add, dos  veces porque no se completa en una sola.
             __m256 h_add = _mm256_hadd_ps(par1, par2);
-            __m256 h_add = _mm256_hadd_ps(h_add, h_add);
+            h_add = _mm256_hadd_ps(h_add, h_add);
 
             // permutamos el vector final y lo extraemos para el outcome.
             __m256 permutado = _mm256_permutevar8x32_ps(h_add, _mm256_set_epi32(0, 0, 0, 0, 5, 1, 4, 0)); // After permutations
