@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
         
         _mm256_store_pd(&a[i], va);
         va = _mm256_add_pd(va, cons); 
-        
     }
 
     __m256d mm = {1.0001, 1.0001, 1.0001, 1.0001};

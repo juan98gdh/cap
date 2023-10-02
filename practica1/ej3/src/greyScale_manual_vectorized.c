@@ -78,11 +78,13 @@ int main(int nargs, char **argv)
         int imageSize = width * height;
 
         for(int i = 0, j = 0; j < imageSize; i += 16, j += 4) {
+            
+            __m128i* data_ptr_one = (__m128i*)(rgb_image + i);
+            __m128i* data_ptr_two = (__m128i*)(rgb_image + i + 8);
 
             // Storing 2 pixels in each vector
-            __m128i datal = _mm_loadl_epi64(rgb_image + i); // 2 pixeles
-            __m128i datah = _mm_loadl_epi64(rgb_image + i + 8);
-
+            __m128i datal = _mm_loadl_epi64(data_ptr_one); // 2 pixeles
+            __m128i datah = _mm_loadl_epi64(data_ptr_two);
 
             // Extending each vector and converting to float
             __m256i extendedlInt = _mm256_cvtepu8_epi32(datal);
