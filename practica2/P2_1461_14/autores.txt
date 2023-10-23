@@ -1,0 +1,8 @@
+grupo: 4161
+
+pareja: 14
+
+integrantes:
+
+    Colman López Alonso      - colman.lopez@estudiante.uam.es
+    Juan González Domínguez  - juan.gonzalezd@estudiante.uam.es
